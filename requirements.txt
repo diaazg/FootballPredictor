@@ -1,0 +1,31 @@
+ # Data Manipulation & Analysis                                                                                                     
+  pandas                                                                                                                             
+  numpy                                                                                                                              
+                  
+  # Machine Learning & Modeling
+  scikit-learn
+  xgboost
+  lightgbm
+
+  # Explainability
+  shap
+  lime                                                                                                                               
+   
+  # Visualization                                                                                                                    
+  matplotlib      
+  seaborn                                                                                                                            
+  plotly
+                                                                                                                                     
+  # Web Backend   
+  fastapi
+  uvicorn[standard]
+
+  # Dashboard App
+  streamlit
+
+  # HTTP client (Streamlit → FastAPI communication)
+  requests
+
+  # Development Environment
+  jupyter
+  notebook

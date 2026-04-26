@@ -1,0 +1,6 @@
+data/
+documentation/
+docs/
+*.pkl
+.claude/
+*.pyc
