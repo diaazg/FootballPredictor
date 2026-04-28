@@ -20,9 +20,9 @@ _CYCLE_META = {
         "note": "50.22% test accuracy on chronological hold-out (last 20% of matches by date) "
                 "vs 48.89% dummy baseline (Dataset 2, rolling features). The legacy 57.33% number "
                 "was inflated by leaky-CV scaling and is preserved in models/random_split_backup/.",
-        "model_file":   "cycle1_xgb_best.pkl",
-        "scaler_file":  "cycle1_scaler.pkl",
-        "features_file":"cycle1_feature_cols.pkl",
+        "model_file":   "cycle1/cycle1_xgb_best.pkl",
+        "scaler_file":  "cycle1/cycle1_scaler.pkl",
+        "features_file":"cycle1/cycle1_feature_cols.pkl",
     },
     "xg": {
         "description":  "Expected Goals (xG) probability for a shot",
@@ -32,9 +32,9 @@ _CYCLE_META = {
         "primary_value":  0.8342,
         "auc":            0.8342,
         "note": "AUC=0.8342 (chronological matchId split) vs 0.8183 random split; 9:1 class imbalance",
-        "model_file":   "cycle2_best_model.pkl",
-        "scaler_file":  "cycle2_scaler.pkl",
-        "features_file":"cycle2_feature_cols.pkl",
+        "model_file":   "cycle2/cycle2_best_model.pkl",
+        "scaler_file":  "cycle2/cycle2_scaler.pkl",
+        "features_file":"cycle2/cycle2_feature_cols.pkl",
     },
     "injury": {
         "description":  "Player injury risk (High = 28+ days missed this season)",
@@ -44,9 +44,9 @@ _CYCLE_META = {
         "primary_value":  0.6723,
         "auc":            0.6723,
         "note": "AUC=0.6723 (chronological start_year split) vs 0.6220 random LR; above published 0.60-0.70 range",
-        "model_file":   "cycle3_best_model.pkl",
-        "scaler_file":  "cycle3_scaler.pkl",
-        "features_file":"cycle3_feature_cols.pkl",
+        "model_file":   "cycle3/cycle3_best_model.pkl",
+        "scaler_file":  "cycle3/cycle3_scaler.pkl",
+        "features_file":"cycle3/cycle3_feature_cols.pkl",
     },
 }
 
