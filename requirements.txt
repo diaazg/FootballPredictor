@@ -1,31 +1,36 @@
- # Data Manipulation & Analysis                                                                                                     
-  pandas                                                                                                                             
-  numpy                                                                                                                              
-                  
-  # Machine Learning & Modeling
-  scikit-learn
-  xgboost
-  lightgbm
+# ── Data manipulation & analysis ─────────────────────────────────────────────
+pandas
+numpy
 
-  # Explainability
-  shap
-  lime                                                                                                                               
-   
-  # Visualization                                                                                                                    
-  matplotlib      
-  seaborn                                                                                                                            
-  plotly
-                                                                                                                                     
-  # Web Backend   
-  fastapi
-  uvicorn[standard]
+# ── Machine learning ────────────────────────────────────────────────────────
+scikit-learn
+xgboost
+lightgbm
 
-  # Dashboard App
-  streamlit
+# ── Model persistence ───────────────────────────────────────────────────────
+joblib
 
-  # HTTP client (Streamlit → FastAPI communication)
-  requests
+# ── Explainability ──────────────────────────────────────────────────────────
+shap
 
-  # Development Environment
-  jupyter
-  notebook
+# ── Visualisation ───────────────────────────────────────────────────────────
+matplotlib
+seaborn
+plotly
+
+# ── API backend ─────────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+pydantic
+
+# ── Streamlit dashboard ─────────────────────────────────────────────────────
+streamlit
+
+# ── HTTP client (dashboard → API) ───────────────────────────────────────────
+requests
+
+# ── Notebook environment ────────────────────────────────────────────────────
+jupyter
+notebook
+ipykernel
+nbconvert

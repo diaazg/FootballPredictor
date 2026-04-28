@@ -12,13 +12,24 @@ from api.services.model_registry import get_entry
 from api.ml.pipeline import build_match_vector, build_xg_vector, build_injury_vector
 
 
+_TREE_MODELS = {
+    "XGBClassifier",
+    "LGBMClassifier",
+    "RandomForestClassifier",
+    "ExtraTreesClassifier",
+    "GradientBoostingClassifier",
+    "CatBoostClassifier",
+    "DecisionTreeClassifier",
+}
+
+
 def _explain_single(model_name: str, X_raw: pd.DataFrame, top_n: int) -> dict:
     entry = get_entry(model_name)
-    X_scaled = entry.scaler.transform(X_raw)
+    X_scaled = entry.scaler.transform(X_raw) if entry.scaler is not None else X_raw.values
 
     model_type = type(entry.model).__name__
 
-    if model_type == "XGBClassifier":
+    if model_type in _TREE_MODELS:
         explainer = shap.TreeExplainer(entry.model)
         shap_values = explainer.shap_values(X_scaled)
         ev = explainer.expected_value
@@ -80,14 +91,16 @@ def _explain_single(model_name: str, X_raw: pd.DataFrame, top_n: int) -> dict:
 def explain_match(
     home_team_id: int,
     away_team_id: int,
-    attendance: float,
     top_n: int = 10,
+    mw: int | None = None,
     home_stats: dict | None = None,
     away_stats: dict | None = None,
 ) -> dict:
     entry = get_entry("match")
-    X = build_match_vector(home_team_id, away_team_id, attendance, entry.feature_cols,
-                           home_stats_override=home_stats, away_stats_override=away_stats)
+    X = build_match_vector(home_team_id, away_team_id, entry.feature_cols,
+                           mw=mw,
+                           home_stats_override=home_stats,
+                           away_stats_override=away_stats)
     return _explain_single("match", X, top_n)
 
 

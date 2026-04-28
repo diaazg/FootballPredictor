@@ -20,7 +20,6 @@ with st.sidebar:
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("🏥 Player Injury Risk Predictor")
-st.caption("Cycle 3 · XGBoost (Tuned, Chronological) · AUC = 0.6723 · Above published 0.60–0.70 sports-science range")
 st.write(
     "Enter a player's physical attributes and injury history to predict "
     "whether they are at high risk of missing **28+ days** this season."
@@ -126,16 +125,6 @@ if st.button("Predict Injury Risk", type="primary", use_container_width=True):
         m1.metric("High Injury Probability", f"{prob_high*100:.1f}%")
         m2.metric("Low Injury Probability",  f"{prob_low*100:.1f}%")
         st.metric("Confidence", confidence.upper())
-
-        st.write("")
-        st.info(
-            "**Threshold:** High Injury = 28+ days missed this season.\n\n"
-            "**Context:** Published sports-science models achieve AUC 0.60–0.70 for injury prediction. "
-            "This model (XGBoost tuned on chronological split, AUC=0.6723) is at the top of that range, "
-            "but cannot account for training load, contact events, or pitch conditions — "
-            "the primary causal injury factors.",
-            icon="ℹ️",
-        )
 
     # ── SHAP ──────────────────────────────────────────────────────────────────
     if show_shap:

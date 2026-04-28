@@ -17,8 +17,8 @@ def predict(body: PredictionRequest):
     Set the **`model`** field to select the prediction type:
 
     - `"match"` — Predict match outcome (Home Win / Draw / Away Win).
-      Provide `home_team_id`, `away_team_id`, and optionally `attendance`.
-      Rolling features are looked up automatically from the feature store.
+      Provide `home_team_id`, `away_team_id`, and optionally `mw` (matchweek 1-38).
+      Each team's season-to-date stats are looked up automatically from the feature store.
 
     - `"xg"` — Predict Expected Goals probability for a shot.
       Provide raw X/Y coordinates (0-100 scale). Distance and Angle are
@@ -36,7 +36,7 @@ def predict(body: PredictionRequest):
             result = svc.predict_match(
                 body.home_team_id,
                 body.away_team_id,
-                body.attendance,
+                mw=body.mw,
                 home_stats=body.home_stats,
                 away_stats=body.away_stats,
             )

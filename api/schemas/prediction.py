@@ -15,18 +15,18 @@ from pydantic import BaseModel, Field
 
 class MatchPredictionRequest(BaseModel):
     model: Literal["match"]
-    home_team_id: int   = Field(..., ge=1, le=25, example=12,
-                                description="Label-encoded home team ID (1-25)")
-    away_team_id: int   = Field(..., ge=1, le=25, example=7,
-                                description="Label-encoded away team ID (1-25)")
-    attendance:   float = Field(0, ge=0, example=45000,
-                                description="Match attendance (0 = use dataset mean)")
+    home_team_id: int   = Field(..., ge=0, le=43, example=24,
+                                description="Label-encoded home team ID (0-43; alphabetic over all PL teams 2000-2018)")
+    away_team_id: int   = Field(..., ge=0, le=43, example=23,
+                                description="Label-encoded away team ID (0-43)")
+    mw:           Optional[int] = Field(None, ge=1, le=38, example=20,
+                                description="Matchweek (1-38). Defaults to latest matchweek in the dataset.")
     home_stats:   Optional[dict] = Field(None,
-                                description="Override home team rolling stats (8 avg_*_5 keys). "
-                                            "If omitted, stats are loaded from the feature store.")
+                                description="Override home team snapshot stats. Keys: goals_scored, "
+                                            "goals_conceded, points, form_pts, gd, win_streak_3, "
+                                            "win_streak_5, loss_streak_3, loss_streak_5, m1..m5.")
     away_stats:   Optional[dict] = Field(None,
-                                description="Override away team rolling stats (8 avg_*_5 keys). "
-                                            "If omitted, stats are loaded from the feature store.")
+                                description="Override away team snapshot stats (same keys as home_stats).")
 
 
 class XGPredictionRequest(BaseModel):

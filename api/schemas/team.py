@@ -2,9 +2,9 @@ from pydantic import BaseModel, Field
 
 
 class TeamStats(BaseModel):
-    team_id: int  = Field(..., description="Label-encoded team ID (1-25)")
+    team_id: int  = Field(..., description="Label-encoded team ID (alphabetic over PL teams 2000-2018)")
     name:    str  = Field("", description="Human-readable team name")
-    stats:   dict = Field(..., description="Latest 5-match rolling averages for this team")
+    stats:   dict = Field(..., description="Latest snapshot of the team's season-to-date stats")
 
 
 class TeamDetailResponse(TeamStats):

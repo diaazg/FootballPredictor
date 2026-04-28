@@ -10,7 +10,7 @@ from api.schemas.prediction import (
 
 class MatchExplainRequest(MatchPredictionRequest):
     model: Literal["match"]  # type: ignore[assignment]
-    top_n: int = Field(10, ge=1, le=19,
+    top_n: int = Field(10, ge=1, le=33,
                        description="Number of top SHAP features to return")
 
 

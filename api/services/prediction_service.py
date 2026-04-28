@@ -27,16 +27,17 @@ def _confidence(max_prob: float) -> str:
 def predict_match(
     home_team_id: int,
     away_team_id: int,
-    attendance: float,
+    mw: int | None = None,
     home_stats: dict | None = None,
     away_stats: dict | None = None,
 ) -> dict:
     entry = get_entry("match")
-    X = build_match_vector(home_team_id, away_team_id, attendance, entry.feature_cols,
-                           home_stats_override=home_stats, away_stats_override=away_stats)
-    X_scaled = entry.scaler.transform(X)
-    code = int(entry.model.predict(X_scaled)[0])
-    probs = entry.model.predict_proba(X_scaled)[0]
+    X = build_match_vector(home_team_id, away_team_id, entry.feature_cols,
+                           mw=mw,
+                           home_stats_override=home_stats,
+                           away_stats_override=away_stats)
+    code = int(entry.model.predict(X)[0])
+    probs = entry.model.predict_proba(X)[0]
 
     prob_home = round(float(probs[2]), 4)
     prob_draw = round(float(probs[1]), 4)
