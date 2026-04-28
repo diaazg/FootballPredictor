@@ -8,13 +8,13 @@ router = APIRouter()
 @router.get(
     "/teams",
     response_model=TeamListResponse,
-    summary="List all teams with their latest rolling stats",
+    summary="List all teams with their latest snapshot stats",
 )
 def teams_list():
     """
     Return every team in the feature store along with their most recent
-    5-match rolling averages. These are the stats the match prediction
-    model will use when you provide a team ID.
+    season-to-date stats (goals, points, form, streaks, last 5 results).
+    These are the stats the match prediction model will use when you provide a team ID.
     """
     all_teams = get_all_teams()
     return TeamListResponse(
@@ -26,13 +26,13 @@ def teams_list():
 @router.get(
     "/teams/{team_id}",
     response_model=TeamDetailResponse,
-    summary="Get latest rolling stats for one team",
+    summary="Get latest snapshot stats for one team",
 )
 def team_stats(team_id: int):
     """
-    Return the latest 5-match rolling averages for a specific team.
+    Return the latest snapshot of a team's season-to-date stats.
 
-    `team_id` is the label-encoded integer (1-25) used in `/predict`.
+    `team_id` is the label-encoded integer used in `/predict`.
     Returns 404 if the team ID is not in the feature store.
     """
     team = get_team(team_id)

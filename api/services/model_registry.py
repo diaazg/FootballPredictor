@@ -15,11 +15,11 @@ _CYCLE_META = {
         "cycle":        1,
         "model_type":   "XGBoost (tuned, chronological)",
         "primary_metric": "accuracy",
-        "primary_value":  0.5022,
+        "primary_value":  0.5285,
         "auc":            None,
-        "note": "50.22% test accuracy on chronological hold-out (last 20% of matches by date) "
-                "vs 48.89% dummy baseline (Dataset 2, rolling features). The legacy 57.33% number "
-                "was inflated by leaky-CV scaling and is preserved in models/random_split_backup/.",
+        "note": "52.85% test accuracy on chronological hold-out (last 20% of matches by season) "
+                "vs ~46% dummy baseline. Trained on 5,472 Premier League matches (2000-2018, "
+                "33 features: form, goals, points, streaks, last-5 results).",
         "model_file":   "cycle1/cycle1_xgb_best.pkl",
         "scaler_file":  "cycle1/cycle1_scaler.pkl",
         "features_file":"cycle1/cycle1_feature_cols.pkl",
@@ -53,13 +53,12 @@ _CYCLE_META = {
 # Comparison table: all models evaluated per cycle
 _CYCLE_COMPARISONS = {
     "match": [
-        {"name": "XGBoost (tuned, chronological)", "accuracy": 0.5022, "auc": None, "note": "Best — saved model (chronological hold-out)"},
-        {"name": "Random Forest (untuned, chrono)","accuracy": 0.5111, "auc": None, "note": "Untuned RF on chronological split"},
-        {"name": "XGBoost (untuned, chrono)",       "accuracy": 0.5022, "auc": None, "note": "Untuned XGB on chronological split"},
-        {"name": "Logistic Regression (chrono)",    "accuracy": 0.4356, "auc": None, "note": "LR baseline on chronological split"},
-        {"name": "XGBoost (tuned, random) [legacy]","accuracy": 0.5733, "auc": None, "note": "Legacy random-split with leaky CV (in random_split_backup/)"},
-        {"name": "XGBoost (tuned, random) [honest]","accuracy": 0.4622, "auc": None, "note": "Random-split with proper Pipeline-based CV"},
-        {"name": "Dummy (most_frequent)",          "accuracy": 0.4889, "auc": None, "note": "Chronological dummy floor"},
+        {"name": "XGBoost (tuned, chronological)", "accuracy": 0.5285, "auc": None, "note": "Best — saved model (PL 2000-2018, chronological hold-out)"},
+        {"name": "XGBoost (tuned, random)",        "accuracy": 0.5278, "auc": None, "note": "Random-split tuned XGBoost (PL only)"},
+        {"name": "Random Forest (untuned)",        "accuracy": 0.5139, "auc": None, "note": "Random-split untuned RF baseline"},
+        {"name": "XGBoost (untuned)",              "accuracy": 0.5000, "auc": None, "note": "Random-split untuned XGB"},
+        {"name": "Logistic Regression",            "accuracy": 0.4900, "auc": None, "note": "Linear baseline"},
+        {"name": "Dummy (most_frequent)",          "accuracy": 0.4635, "auc": None, "note": "Majority-class floor"},
     ],
     "xg": [
         {"name": "XGBoost (tuned, chronological)",  "accuracy": 0.7244, "auc": 0.8342, "note": "Best — saved model (chronological matchId split)"},

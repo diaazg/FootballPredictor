@@ -1,119 +1,107 @@
 from __future__ import annotations
 
 """
-Rolling feature cache per team.
+Per-team latest-stats cache for Cycle 1 (match outcome).
 
-Loaded once at startup from skysports_match_stats_cleaned.csv.
-Replicates the rolling window logic from cycle1_feature_engineering_skysports.ipynb:
-  - Build a unified per-team match history (home + away combined)
-  - Compute shift(1).rolling(5, min_periods=1).mean() per team
-  - Store each team's latest rolling stats
+Loaded once at startup from premier_league_matches_processed.csv.
+For each team, captures the snapshot of its season-to-date stats from its
+most recent appearance in the dataset:
 
-Keys: int team ID (1-25)
-Values: dict of {stat_name -> float}
+  - goals_scored, goals_conceded, points, form_pts, gd
+  - win_streak_3, win_streak_5, loss_streak_3, loss_streak_5
+  - m1..m5 (last 5 results, encoded 0/1/3 = L/D/W)
+
+Also exposes team-id → team-name lookup, derived from the raw CSV using the
+same alphabetic encoding as the preprocessing notebook.
 """
 
 import os
 import pandas as pd
 
-_DATA_PATH = os.path.join(
+_PROCESSED_PATH = os.path.join(
     os.path.dirname(__file__), "..", "..", "data", "processed",
-    "skysports_match_stats_cleaned.csv"
+    "premier_league_matches_processed.csv",
+)
+_RAW_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "..", "data", "raw",
+    "premier_league_matches.csv",
 )
 
-# Column mapping: raw stat column → generic stat name
-_HOME_COLS = [
-    "home_possessions", "home_shots", "home_on", "home_pass",
-    "home_tackles", "home_corners", "home_fouls", "home_yellow",
+# Snapshot fields captured per team
+TEAM_STAT_KEYS = [
+    "goals_scored", "goals_conceded", "points", "form_pts", "gd",
+    "win_streak_3", "win_streak_5", "loss_streak_3", "loss_streak_5",
+    "m1", "m2", "m3", "m4", "m5",
 ]
-_AWAY_COLS = [
-    "away_possessions", "away_shots", "away_on", "away_pass",
-    "away_tackles", "away_corners", "away_fouls", "away_yellow",
-]
-_STAT_NAMES = [
-    "possession", "shots", "shots_on_target", "pass_accuracy",
-    "tackles", "corners", "fouls", "yellow_cards",
-]
-
-# The final rolling feature names (as expected by the Cycle 1 model)
-ROLLING_STAT_KEYS = [f"avg_{s}_5" for s in _STAT_NAMES]
-
-TEAM_NAMES: dict[int, str] = {
-    1: "Manchester City",
-    2: "Arsenal",
-    3: "Manchester United",
-    4: "Newcastle United",
-    5: "Liverpool",
-    6: "Brighton And Hove Albion",
-    7: "Aston Villa",
-    8: "Tottenham Hotspur",
-    9: "Brentford",
-    10: "Fulham",
-    11: "Crystal Palace",
-    12: "Chelsea",
-    13: "Wolverhampton Wanderers",
-    14: "West Ham United",
-    15: "Bournemouth",
-    16: "Nottingham Forest",
-    17: "Everton",
-    18: "Leicester City",
-    19: "Leeds United",
-    20: "Southampton",
-    21: "Watford",
-    22: "Norwich City",
-    23: "Burnley",
-    24: "West Bromwich Albion",
-    25: "Sheffield United",
-}
 
 _store: dict[int, dict[str, float]] = {}
+_team_names: dict[int, str] = {}
+_latest_mw: int = 1
 _ready: bool = False
 
 
+def _build_team_id_map() -> dict[str, int]:
+    """Reproduce the preprocessing notebook's alphabetic team encoding."""
+    raw = pd.read_csv(_RAW_PATH)
+    all_teams = sorted(pd.concat([raw["HomeTeam"], raw["AwayTeam"]]).unique())
+    return {team: idx for idx, team in enumerate(all_teams)}
+
+
 def build_feature_store() -> None:
-    global _ready
+    global _ready, _latest_mw
 
-    df = pd.read_csv(_DATA_PATH, parse_dates=["date"])
-    df = df.sort_values("date").reset_index(drop=True)
-    df["match_idx"] = df.index
+    # Team ID → name lookup
+    team_map = _build_team_id_map()
+    _team_names.update({idx: name for name, idx in team_map.items()})
 
-    # Build team match history — one row per team per match
+    df = pd.read_csv(_PROCESSED_PATH)
+
+    # Build a per-team row for every match appearance (home and away combined)
     rows = []
-    for _, row in df.iterrows():
+    for _, r in df.iterrows():
         rows.append({
-            "match_idx": row["match_idx"],
-            "date":      row["date"],
-            "team":      row["Home Team"],
-            "side":      "home",
-            **{stat: row[home_col] for stat, home_col in zip(_STAT_NAMES, _HOME_COLS)},
+            "team":           int(r["HomeTeam"]),
+            "season":         int(r["Season"]),
+            "mw":             int(r["MW"]),
+            "goals_scored":   float(r["HTGS"]),
+            "goals_conceded": float(r["HTGC"]),
+            "points":         float(r["HTP"]),
+            "form_pts":       float(r["HTFormPts"]),
+            "gd":             float(r["HTGD"]),
+            "win_streak_3":   int(r["HTWinStreak3"]),
+            "win_streak_5":   int(r["HTWinStreak5"]),
+            "loss_streak_3":  int(r["HTLossStreak3"]),
+            "loss_streak_5":  int(r["HTLossStreak5"]),
+            "m1": int(r["HM1"]), "m2": int(r["HM2"]), "m3": int(r["HM3"]),
+            "m4": int(r["HM4"]), "m5": int(r["HM5"]),
         })
         rows.append({
-            "match_idx": row["match_idx"],
-            "date":      row["date"],
-            "team":      row["Away Team"],
-            "side":      "away",
-            **{stat: row[away_col] for stat, away_col in zip(_STAT_NAMES, _AWAY_COLS)},
+            "team":           int(r["AwayTeam"]),
+            "season":         int(r["Season"]),
+            "mw":             int(r["MW"]),
+            "goals_scored":   float(r["ATGS"]),
+            "goals_conceded": float(r["ATGC"]),
+            "points":         float(r["ATP"]),
+            "form_pts":       float(r["ATFormPts"]),
+            "gd":             float(r["ATGD"]),
+            "win_streak_3":   int(r["ATWinStreak3"]),
+            "win_streak_5":   int(r["ATWinStreak5"]),
+            "loss_streak_3":  int(r["ATLossStreak3"]),
+            "loss_streak_5":  int(r["ATLossStreak5"]),
+            "m1": int(r["AM1"]), "m2": int(r["AM2"]), "m3": int(r["AM3"]),
+            "m4": int(r["AM4"]), "m5": int(r["AM5"]),
         })
 
-    tm = pd.DataFrame(rows).sort_values(["team", "date"]).reset_index(drop=True)
-
-    # Rolling averages: exclude current match result (shift 1 before rolling)
-    for stat in _STAT_NAMES:
-        tm[f"avg_{stat}_5"] = (
-            tm.groupby("team")[stat]
-            .transform(lambda x: x.shift(1).rolling(5, min_periods=1).mean())
-        )
-
-    # For each team take their most recent entry (latest rolling snapshot)
-    latest = tm.sort_values("date").groupby("team").last().reset_index()
+    tm = pd.DataFrame(rows)
+    # Latest per team = max (season, mw) across appearances
+    tm["rank_key"] = tm["season"] * 100 + tm["mw"]
+    latest = tm.sort_values("rank_key").groupby("team").last().reset_index()
 
     for _, row in latest.iterrows():
         team_id = int(row["team"])
-        _store[team_id] = {
-            key: round(float(row[key]), 4) if pd.notna(row[key]) else 0.0
-            for key in ROLLING_STAT_KEYS
-        }
+        _store[team_id] = {k: float(row[k]) for k in TEAM_STAT_KEYS}
 
+    _latest_mw = int(latest["mw"].max())
     _ready = True
 
 
@@ -121,8 +109,16 @@ def get_team_stats(team_id: int) -> dict[str, float] | None:
     return _store.get(team_id)
 
 
+def get_team_name(team_id: int) -> str | None:
+    return _team_names.get(team_id)
+
+
 def list_teams() -> list[int]:
     return sorted(_store.keys())
+
+
+def latest_mw() -> int:
+    return _latest_mw
 
 
 def is_ready() -> bool:

@@ -80,14 +80,16 @@ def _explain_single(model_name: str, X_raw: pd.DataFrame, top_n: int) -> dict:
 def explain_match(
     home_team_id: int,
     away_team_id: int,
-    attendance: float,
     top_n: int = 10,
+    mw: int | None = None,
     home_stats: dict | None = None,
     away_stats: dict | None = None,
 ) -> dict:
     entry = get_entry("match")
-    X = build_match_vector(home_team_id, away_team_id, attendance, entry.feature_cols,
-                           home_stats_override=home_stats, away_stats_override=away_stats)
+    X = build_match_vector(home_team_id, away_team_id, entry.feature_cols,
+                           mw=mw,
+                           home_stats_override=home_stats,
+                           away_stats_override=away_stats)
     return _explain_single("match", X, top_n)
 
 

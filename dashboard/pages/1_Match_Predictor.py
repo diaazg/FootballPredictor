@@ -13,20 +13,26 @@ from dashboard.components.charts import match_probability_chart, shap_bar_chart
 
 st.set_page_config(page_title="Match Predictor", page_icon="🏆", layout="wide")
 
-# Stat display labels (rolling keys → human names)
+# Stat display labels (PL snapshot keys → human names)
 _STAT_LABELS = {
-    "avg_possession_5":      "Possession % (5-match avg)",
-    "avg_shots_5":           "Shots (5-match avg)",
-    "avg_shots_on_target_5": "Shots on Target (5-match avg)",
-    "avg_pass_accuracy_5":   "Pass Accuracy % (5-match avg)",
-    "avg_tackles_5":         "Tackles (5-match avg)",
-    "avg_corners_5":         "Corners (5-match avg)",
-    "avg_fouls_5":           "Fouls (5-match avg)",
-    "avg_yellow_cards_5":    "Yellow Cards (5-match avg)",
+    "goals_scored":   "Goals Scored (season-to-date)",
+    "goals_conceded": "Goals Conceded (season-to-date)",
+    "points":         "Points (season-to-date)",
+    "form_pts":       "Form Points (last 5 matches)",
+    "gd":             "Goal Difference",
+    "win_streak_3":   "Win Streak ≥3",
+    "win_streak_5":   "Win Streak ≥5",
+    "loss_streak_3":  "Loss Streak ≥3",
+    "loss_streak_5":  "Loss Streak ≥5",
+    "m1":             "Last match result (3=W, 1=D, 0=L)",
+    "m2":             "2nd-last match result",
+    "m3":             "3rd-last match result",
+    "m4":             "4th-last match result",
+    "m5":             "5th-last match result",
 }
 STAT_KEYS = list(_STAT_LABELS.keys())
 
-# ── Sidebar status ────────────────────────────────────────────────────────────
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("⚽ Football Predictor")
     if api.is_api_ready():
@@ -36,7 +42,7 @@ with st.sidebar:
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("🏆 Match Outcome Predictor")
-st.caption("Cycle 1 · XGBoost (Tuned, Chronological) · 50.22% accuracy on hold-out · Premier League rolling stats")
+st.caption("Cycle 1 · XGBoost (Tuned, Chronological) · 52.85% accuracy on hold-out · Premier League 2000–2018")
 st.divider()
 
 # ── Load team list ────────────────────────────────────────────────────────────
@@ -59,25 +65,26 @@ if not team_options:
 
 # ── Team selection ────────────────────────────────────────────────────────────
 col_left, col_right = st.columns(2)
+team_names_sorted = sorted(team_options.keys())
 
 with col_left:
     st.subheader("Home Team")
-    home_label = st.selectbox("Select Home Team", list(team_options.keys()), index=0, key="home")
+    home_label = st.selectbox("Select Home Team", team_names_sorted, index=0, key="home")
     home_id    = team_options[home_label]
 
 with col_right:
     st.subheader("Away Team")
-    away_label = st.selectbox("Select Away Team", list(team_options.keys()), index=1, key="away")
+    away_label = st.selectbox("Select Away Team", team_names_sorted, index=1, key="away")
     away_id    = team_options[away_label]
 
-attendance = st.number_input(
-    "Expected Attendance (0 = use dataset mean)",
-    min_value=0, max_value=90000, value=40000, step=1000,
+mw = st.number_input(
+    "Matchweek (1–38)", min_value=1, max_value=38, value=20, step=1,
+    help="Where the fixture sits in the season.",
 )
 
 # ── Stats mode ────────────────────────────────────────────────────────────────
 st.divider()
-st.subheader("Rolling Statistics")
+st.subheader("Team Stats (season-to-date)")
 stats_mode = st.radio(
     "Stats source",
     ["Auto (load from feature store)", "Manual (enter stats)", "Upload CSV"],
@@ -98,7 +105,7 @@ def _fetch_stored(team_id: int) -> dict:
 if stats_mode == "Auto (load from feature store)":
     col_h, col_a = st.columns(2)
     with col_h:
-        with st.expander(f"{home_label} — latest rolling stats", expanded=False):
+        with st.expander(f"{home_label} — latest stats", expanded=False):
             try:
                 home_stats = _fetch_stored(home_id)
                 for k, label in _STAT_LABELS.items():
@@ -106,7 +113,7 @@ if stats_mode == "Auto (load from feature store)":
             except Exception:
                 st.warning("Could not load home team stats.")
     with col_a:
-        with st.expander(f"{away_label} — latest rolling stats", expanded=False):
+        with st.expander(f"{away_label} — latest stats", expanded=False):
             try:
                 away_stats = _fetch_stored(away_id)
                 for k, label in _STAT_LABELS.items():
@@ -129,7 +136,7 @@ elif stats_mode == "Manual (enter stats)":
         for k, label in _STAT_LABELS.items():
             manual_home[k] = st.number_input(
                 label, value=float(stored_home.get(k, 0.0)),
-                min_value=0.0, step=0.1, key=f"home_{k}",
+                step=1.0, key=f"home_{k}",
             )
 
     with col_a:
@@ -137,7 +144,7 @@ elif stats_mode == "Manual (enter stats)":
         for k, label in _STAT_LABELS.items():
             manual_away[k] = st.number_input(
                 label, value=float(stored_away.get(k, 0.0)),
-                min_value=0.0, step=0.1, key=f"away_{k}",
+                step=1.0, key=f"away_{k}",
             )
 
     home_stats_override = manual_home
@@ -147,8 +154,8 @@ elif stats_mode == "Manual (enter stats)":
 else:
     csv_template = (
         "side," + ",".join(STAT_KEYS) + "\n"
-        "home," + ",".join(["0.0"] * len(STAT_KEYS)) + "\n"
-        "away," + ",".join(["0.0"] * len(STAT_KEYS)) + "\n"
+        "home," + ",".join(["0"] * len(STAT_KEYS)) + "\n"
+        "away," + ",".join(["0"] * len(STAT_KEYS)) + "\n"
     )
     st.download_button(
         "Download CSV template",
@@ -157,7 +164,7 @@ else:
         mime="text/csv",
     )
     st.caption(
-        "Fill in the `home` and `away` rows with 5-match rolling averages, "
+        "Fill in the `home` and `away` rows with each team's season-to-date stats, "
         "then upload the file below."
     )
 
@@ -207,7 +214,7 @@ if st.button("Predict Match Outcome", type="primary", use_container_width=True):
         with st.spinner("Running prediction..."):
             try:
                 result = api.predict_match(
-                    home_id, away_id, attendance,
+                    home_id, away_id, mw=mw,
                     home_stats=home_stats_override,
                     away_stats=away_stats_override,
                 )
@@ -253,7 +260,7 @@ if st.button("Predict Match Outcome", type="primary", use_container_width=True):
             with st.spinner("Computing SHAP values..."):
                 try:
                     shap_data = api.explain_match(
-                        home_id, away_id, attendance, top_n=10,
+                        home_id, away_id, top_n=10, mw=mw,
                         home_stats=home_stats_override,
                         away_stats=away_stats_override,
                     )

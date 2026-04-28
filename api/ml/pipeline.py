@@ -10,9 +10,8 @@ Wraps the two feature-engineering steps that must happen at inference time:
 """
 
 import math
-import numpy as np
 import pandas as pd
-from api.ml.feature_store import get_team_stats, ROLLING_STAT_KEYS
+from api.ml.feature_store import get_team_stats, latest_mw
 
 # Cycle 2 pitch constants (Premier League standard: 105m x 68m)
 _PITCH_LENGTH_M = 105.0
@@ -25,31 +24,65 @@ _GOAL_CENTRE_Y  = (_POST_LEFT_M + _POST_RIGHT_M) / 2  # 34.0m
 def build_match_vector(
     home_team_id: int,
     away_team_id: int,
-    attendance: float,
     feature_cols: list[str],
+    mw: int | None = None,
     home_stats_override: dict | None = None,
     away_stats_override: dict | None = None,
 ) -> pd.DataFrame:
     """
-    Assemble the 19-column feature vector for a match prediction.
+    Assemble the Cycle 1 feature vector for a Premier League match.
 
-    Pulls rolling stats from the feature store unless overrides are supplied.
+    Pulls each team's latest snapshot from the feature store unless
+    overrides are supplied. `mw` defaults to the latest matchweek seen
+    in the dataset.
+
     Raises ValueError if a team ID is not in the store and no override is given.
     """
-    home_stats = home_stats_override if home_stats_override is not None else get_team_stats(home_team_id)
-    away_stats = away_stats_override if away_stats_override is not None else get_team_stats(away_team_id)
+    home = home_stats_override if home_stats_override is not None else get_team_stats(home_team_id)
+    away = away_stats_override if away_stats_override is not None else get_team_stats(away_team_id)
 
-    if home_stats is None:
+    if home is None:
         raise ValueError(f"Team ID {home_team_id} not found in feature store.")
-    if away_stats is None:
+    if away is None:
         raise ValueError(f"Team ID {away_team_id} not found in feature store.")
 
+    if mw is None:
+        mw = latest_mw()
+
     row = {
-        "attendance": attendance,
-        "Home Team":  home_team_id,
-        "Away Team":  away_team_id,
-        **{f"home_{k}": v for k, v in home_stats.items()},
-        **{f"away_{k}": v for k, v in away_stats.items()},
+        "HomeTeam":      home_team_id,
+        "AwayTeam":      away_team_id,
+        "HTGS":          home["goals_scored"],
+        "ATGS":          away["goals_scored"],
+        "HTGC":          home["goals_conceded"],
+        "ATGC":          away["goals_conceded"],
+        "HTP":           home["points"],
+        "ATP":           away["points"],
+        "HM1":           home["m1"],
+        "HM2":           home["m2"],
+        "HM3":           home["m3"],
+        "HM4":           home["m4"],
+        "HM5":           home["m5"],
+        "AM1":           away["m1"],
+        "AM2":           away["m2"],
+        "AM3":           away["m3"],
+        "AM4":           away["m4"],
+        "AM5":           away["m5"],
+        "MW":            mw,
+        "HTFormPts":     home["form_pts"],
+        "ATFormPts":     away["form_pts"],
+        "HTWinStreak3":  home["win_streak_3"],
+        "HTWinStreak5":  home["win_streak_5"],
+        "HTLossStreak3": home["loss_streak_3"],
+        "HTLossStreak5": home["loss_streak_5"],
+        "ATWinStreak3":  away["win_streak_3"],
+        "ATWinStreak5":  away["win_streak_5"],
+        "ATLossStreak3": away["loss_streak_3"],
+        "ATLossStreak5": away["loss_streak_5"],
+        "HTGD":          home["gd"],
+        "ATGD":          away["gd"],
+        "DiffPts":       home["points"] - away["points"],
+        "DiffFormPts":   home["form_pts"] - away["form_pts"],
     }
     return pd.DataFrame([row])[feature_cols]
 

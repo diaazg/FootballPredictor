@@ -8,7 +8,7 @@ A full-stack football analytics platform built around three independent machine 
 
 | Cycle | Task | Algorithm | Key metric |
 |-------|------|-----------|------------|
-| 1 | **Match outcome** — Home Win / Draw / Away Win | XGBoost (tuned) | 50.22% accuracy (chronological hold-out) |
+| 1 | **Match outcome** — Home Win / Draw / Away Win | XGBoost (tuned) | 52.85% accuracy (chronological hold-out) |
 | 2 | **Expected Goals (xG)** — probability a shot scores | XGBoost (tuned) | AUC 0.8342 (chronological matchId split) |
 | 3 | **Player injury risk** — high risk = 28+ days missed | XGBoost (tuned) | AUC 0.6723 (chronological year split) |
 
@@ -57,10 +57,8 @@ FootballPredictor/
 │   └── cycle3/                      # cycle3_best_model.pkl, cycle3_scaler.pkl, cycle3_feature_cols.pkl
 │
 ├── notebooks/
-│   ├── cycle1/
-│   │   ├── premier_league/          # PL preprocessing, EDA, modelling, tuning, explainability
-│   │   │   └── chronological/       # Time-split variants of modelling + tuning
-│   │   └── skysports/               # SkySports preprocessing, EDA, feature engineering
+│   ├── cycle1/                      # Premier League: preprocessing, EDA, modelling, tuning, explainability
+│   │   └── chronological/           # Time-split variants of modelling + tuning (deployed source)
 │   ├── cycle2/
 │   │   ├── cycle2_preprocessing_wyscout.ipynb
 │   │   ├── cycle2_exploration_wyscout.ipynb
@@ -85,8 +83,7 @@ FootballPredictor/
 
 | Dataset | Source | Used by |
 |---------|--------|---------|
-| `premier_league_matches.csv` | Premier League 2016-23 match results + basic stats | Cycle 1 Dataset 1 |
-| `skysports_match_stats.csv` | SkySports 2022-23 detailed per-match stats (25 PL teams) | Cycle 1 Dataset 2 + feature store |
+| `premier_league_matches.csv` | Premier League 2000-2018 match results + season-to-date features (form, points, streaks, last-5 results, goal difference) — 6,840 matches across 18 seasons, 44 teams | Cycle 1 (training + feature store) |
 | `events_England.json` + `playerank.json` + `players.json` | Wyscout England event data | Cycle 2 |
 | `player_injuries.csv` | Multi-season player injury records + FIFA attributes | Cycle 3 |
 
@@ -112,10 +109,8 @@ pip install -r requirements.txt
 Run the tuning notebooks in order to produce the `.pkl` files. Every notebook finds the project root automatically, so you can run them from any working directory.
 
 **Cycle 1 — Match outcome:**
-1. `notebooks/cycle1/skysports/cycle1_preprocessing_skysports_match_stats.ipynb`
-2. `notebooks/cycle1/skysports/cycle1_feature_engineering_skysports.ipynb`
-3. `notebooks/cycle1/premier_league/cycle1_preprocessing_premier_league_matches.ipynb`
-4. `notebooks/cycle1/premier_league/cycle1_tuning.ipynb` → saves to `models/cycle1/`
+1. `notebooks/cycle1/cycle1_preprocessing.ipynb`
+2. `notebooks/cycle1/chronological/cycle1_tuning_chronological.ipynb` → saves to `models/cycle1/` (deployed source)
 
 **Cycle 2 — Expected Goals:**
 1. `notebooks/cycle2/cycle2_preprocessing_wyscout.ipynb`
@@ -157,13 +152,13 @@ Unified endpoint for all three cycles. The `model` field selects the prediction 
 ```json
 {
   "model": "match",
-  "home_team_id": 5,
-  "away_team_id": 2,
-  "attendance": 52000
+  "home_team_id": 24,
+  "away_team_id": 23,
+  "mw": 20
 }
 ```
 
-Optional: pass `home_stats` and `away_stats` dicts with rolling averages to override the feature store (useful for future fixtures where stored data is stale).
+`home_team_id` / `away_team_id` are alphabetically encoded over all PL teams 2000-2018 (range 0-43; e.g. Arsenal=0, Liverpool=23, Man City=24). `mw` is the matchweek (1-38) and defaults to the latest matchweek in the dataset. Optional: pass `home_stats` and `away_stats` dicts with the team's season-to-date snapshot to override the feature store.
 
 **Cycle 2 — expected goals:**
 ```json
@@ -235,8 +230,8 @@ Same request body as `/predict` plus an optional `top_n` field (default 10). Ret
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/health/ready` | Returns 200 once models and feature store are loaded |
-| `GET` | `/teams` | List all 25 Premier League teams with IDs |
-| `GET` | `/teams/{id}` | Single team with latest rolling stats |
+| `GET` | `/teams` | List all 44 Premier League teams (2000-2018) with IDs |
+| `GET` | `/teams/{id}` | Single team with latest snapshot stats |
 | `GET` | `/models` | Metadata for all three deployed models |
 | `GET` | `/models/{name}/compare` | All evaluated variants for a given cycle (`match`, `xg`, `injury`) |
 
@@ -246,13 +241,20 @@ Same request body as `/predict` plus an optional `top_n` field (default 10). Ret
 
 ### Cycle 1 — Match outcome
 
-**Feature engineering:** SkySports per-match stats (possession, shots, shots on target, pass accuracy, tackles, corners, fouls, yellow cards) are aggregated into 5-match rolling averages per team using `shift(1).rolling(5, min_periods=1).mean()`. The shift prevents the current match from leaking into its own features. Home and away rolling stats are joined with Premier League result labels (H/D/A).
+**Feature set (33):** Pre-engineered season-to-date stats from the Premier League dataset:
 
-**Train/test split:** Chronological by date — training on earlier seasons, testing on the most recent season. This reflects real deployment: the model never sees future information during training.
+- Identity: `HomeTeam`, `AwayTeam` (alphabetically encoded over 44 teams)
+- Goals: `HTGS`, `ATGS`, `HTGC`, `ATGC` (scored / conceded so far this season)
+- Points and goal difference: `HTP`, `ATP`, `HTGD`, `ATGD`, `DiffPts`
+- Form: `HM1..HM5`, `AM1..AM5` (last 5 results, encoded 0=L, 1=D, 3=W), `HTFormPts`, `ATFormPts`, `DiffFormPts`
+- Streaks: `HTWinStreak3/5`, `HTLossStreak3/5`, `ATWinStreak3/5`, `ATLossStreak3/5`
+- `MW`: matchweek (1-38)
 
-**Feature vector at inference:** The feature store (built from the SkySports CSV at API startup) supplies the latest rolling averages for any team. Users can override these via the Manual or CSV upload modes on the dashboard.
+**Train/test split:** Chronological by season — training on the earliest 80% of matches (2000-2014), testing on the most recent 20% (2015-2018). This reflects real deployment: the model never sees future information during training.
 
-**Result:** 50.22% test accuracy vs 48.89% dummy baseline. The legacy 57.33% number used a random split with leaky cross-validation scaling — it inflated the estimate by about 7 percentage points.
+**Feature vector at inference:** The feature store (built from the processed PL CSV at API startup) caches the latest snapshot of each team's season-to-date stats. Users can override these via the Manual or CSV upload modes on the dashboard for hypothetical or future fixtures.
+
+**Result:** 52.85% test accuracy vs ~46% dummy baseline (+6.5pp). 5,472 training matches; XGBoost dominates the Home Win class (precision 0.54, recall 0.86) but draws remain hard (recall 0.04) — a known limitation across published football-prediction work.
 
 ### Cycle 2 — Expected Goals
 
@@ -280,9 +282,9 @@ Same request body as `/predict` plus an optional `top_n` field (default 10). Ret
 
 ### Why chronological splitting matters
 
-A random split shuffles matches from all seasons into train and test. This means the model can learn patterns from 2022 matches while being tested on 2020 matches — it has "seen the future". For time-series data like football seasons, this inflates performance estimates.
+A random split shuffles matches from all seasons into train and test. This means the model can learn patterns from 2017 matches while being tested on 2010 matches — it has "seen the future". For time-series data like football seasons, this inflates performance estimates.
 
-A chronological split trains on early seasons and tests on later ones, matching how a deployed model actually operates. The difference is significant: for Cycle 1, random-split XGBoost tuned to 57.33% accuracy; the same model on a chronological split achieves 50.22%.
+A chronological split trains on early seasons and tests on later ones, matching how a deployed model actually operates. For Cycle 1, the random and chronological tuned XGBoost numbers are very close (52.78% vs 52.85%), but the chronological number is the one we trust — random-split estimates can hide season-specific drift.
 
 ### Why sklearn Pipeline for cross-validation
 
@@ -301,7 +303,7 @@ Early versions fitted the scaler on the full training set before cross-validatio
 The highest-priority improvements identified during development:
 
 - **Cycle 2 xG:** Add France, Germany, Italy, Spain Wyscout data (~50,000 shots total vs current 8,451). Expected AUC improvement to ~0.85+.
-- **Cycle 1 match:** Extend SkySports scraping beyond the 2022-23 season. The rolling-window features are dataset-agnostic — more seasons = better signal.
+- **Cycle 1 match:** Extend the PL dataset past 2018 (current data ends with the 2017-18 season). Adding modern seasons would also let the feature store reflect current squads.
 - **Cycle 3 injury:** Incorporate training load data (GPS minutes, sprint counts). Physical workload is the largest missing causal factor.
 
 ---

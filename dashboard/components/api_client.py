@@ -26,7 +26,7 @@ def _get(path: str) -> dict | list:
 def predict_match(
     home_team_id: int,
     away_team_id: int,
-    attendance: float,
+    mw: int | None = None,
     home_stats: dict | None = None,
     away_stats: dict | None = None,
 ) -> dict:
@@ -34,8 +34,9 @@ def predict_match(
         "model": "match",
         "home_team_id": home_team_id,
         "away_team_id": away_team_id,
-        "attendance": attendance,
     }
+    if mw is not None:
+        payload["mw"] = mw
     if home_stats is not None:
         payload["home_stats"] = home_stats
     if away_stats is not None:
@@ -64,8 +65,8 @@ def predict_injury(features: dict) -> dict:
 def explain_match(
     home_team_id: int,
     away_team_id: int,
-    attendance: float,
     top_n: int = 10,
+    mw: int | None = None,
     home_stats: dict | None = None,
     away_stats: dict | None = None,
 ) -> dict:
@@ -73,9 +74,10 @@ def explain_match(
         "model": "match",
         "home_team_id": home_team_id,
         "away_team_id": away_team_id,
-        "attendance": attendance,
         "top_n": top_n,
     }
+    if mw is not None:
+        payload["mw"] = mw
     if home_stats is not None:
         payload["home_stats"] = home_stats
     if away_stats is not None:

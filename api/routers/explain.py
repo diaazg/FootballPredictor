@@ -32,8 +32,8 @@ def explain(body: ExplainRequest):
             result = svc.explain_match(
                 body.home_team_id,
                 body.away_team_id,
-                body.attendance,
                 body.top_n,
+                mw=body.mw,
                 home_stats=body.home_stats,
                 away_stats=body.away_stats,
             )

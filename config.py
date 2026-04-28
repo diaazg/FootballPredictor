@@ -31,7 +31,6 @@ class Paths:
 
     # ── Raw files ─────────────────────────────────────────────────────────────
     PL_MATCHES_RAW        = DATA_RAW / "premier_league_matches.csv"
-    SKYSPORTS_RAW         = DATA_RAW / "skysports_match_stats.csv"
     EVENTS_ENGLAND        = DATA_RAW / "events_England.json"
     PLAYERANK             = DATA_RAW / "playerank.json"
     PLAYERS               = DATA_RAW / "players.json"
@@ -41,8 +40,6 @@ class Paths:
 
     # ── Processed files ───────────────────────────────────────────────────────
     PL_MATCHES_PROCESSED      = DATA_PROCESSED / "premier_league_matches_processed.csv"
-    SKYSPORTS_CLEANED         = DATA_PROCESSED / "skysports_match_stats_cleaned.csv"
-    SKYSPORTS_PROCESSED       = DATA_PROCESSED / "skysports_match_stats_processed.csv"
     WYSCOUT_PROCESSED         = DATA_PROCESSED / "wyscout_shots_processed.csv"
     PLAYER_INJURIES_PROCESSED = DATA_PROCESSED / "player_injuries_processed.csv"
 
