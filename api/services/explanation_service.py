@@ -12,13 +12,24 @@ from api.services.model_registry import get_entry
 from api.ml.pipeline import build_match_vector, build_xg_vector, build_injury_vector
 
 
+_TREE_MODELS = {
+    "XGBClassifier",
+    "LGBMClassifier",
+    "RandomForestClassifier",
+    "ExtraTreesClassifier",
+    "GradientBoostingClassifier",
+    "CatBoostClassifier",
+    "DecisionTreeClassifier",
+}
+
+
 def _explain_single(model_name: str, X_raw: pd.DataFrame, top_n: int) -> dict:
     entry = get_entry(model_name)
-    X_scaled = entry.scaler.transform(X_raw)
+    X_scaled = entry.scaler.transform(X_raw) if entry.scaler is not None else X_raw.values
 
     model_type = type(entry.model).__name__
 
-    if model_type == "XGBClassifier":
+    if model_type in _TREE_MODELS:
         explainer = shap.TreeExplainer(entry.model)
         shap_values = explainer.shap_values(X_scaled)
         ev = explainer.expected_value

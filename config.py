@@ -51,7 +51,6 @@ class Paths:
 
     # ── Cycle 1 model artefacts ───────────────────────────────────────────────
     C1_MODEL    = MODELS_C1 / "cycle1_xgb_best.pkl"
-    C1_SCALER   = MODELS_C1 / "cycle1_scaler.pkl"
     C1_FEATURES = MODELS_C1 / "cycle1_feature_cols.pkl"
 
     # ── Cycle 2 model artefacts ───────────────────────────────────────────────

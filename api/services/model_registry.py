@@ -21,7 +21,7 @@ _CYCLE_META = {
                 "vs ~46% dummy baseline. Trained on 5,472 Premier League matches (2000-2018, "
                 "33 features: form, goals, points, streaks, last-5 results).",
         "model_file":   "cycle1/cycle1_xgb_best.pkl",
-        "scaler_file":  "cycle1/cycle1_scaler.pkl",
+        "scaler_file":  None,
         "features_file":"cycle1/cycle1_feature_cols.pkl",
     },
     "xg": {
@@ -83,7 +83,7 @@ _CYCLE_COMPARISONS = {
 @dataclass
 class ModelEntry:
     model:        object
-    scaler:       object
+    scaler:       object | None
     feature_cols: list[str]
     meta:         dict
 
@@ -95,9 +95,11 @@ _ready: bool = False
 def load_registry() -> None:
     global _ready
     for name, meta in _CYCLE_META.items():
+        scaler = (joblib.load(os.path.join(_MODELS_DIR, meta["scaler_file"]))
+                  if meta.get("scaler_file") else None)
         _registry[name] = ModelEntry(
             model        = joblib.load(os.path.join(_MODELS_DIR, meta["model_file"])),
-            scaler       = joblib.load(os.path.join(_MODELS_DIR, meta["scaler_file"])),
+            scaler       = scaler,
             feature_cols = joblib.load(os.path.join(_MODELS_DIR, meta["features_file"])),
             meta         = meta,
         )

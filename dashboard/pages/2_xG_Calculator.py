@@ -20,7 +20,7 @@ with st.sidebar:
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("🎯 Expected Goals (xG) Calculator")
-st.caption("Cycle 2 · XGBoost (Tuned, Chronological) · AUC = 0.8342 · Premier League shots")
+st.caption("Premier League shots")
 st.write(
     "Set the shot location and context below. **Distance and angle to goal are "
     "computed automatically** from the coordinates."
@@ -48,21 +48,16 @@ with col_inputs:
     show_shap   = st.checkbox("Show SHAP explanation", value=False)
 
 with col_info:
-    st.subheader("What the model uses")
+    st.subheader("Inputs used")
     st.markdown("""
-| Feature | Source |
+| Input | Source |
 |---|---|
-| X, Y | Your sliders above |
+| X, Y | Your sliders |
 | Distance | Computed from X, Y → goal centre |
 | Angle | Computed from X, Y → both posts |
 | Foot type | Radio selection |
 | Match half | Radio selection |
 | Player rank | Slider |
-
-**Key insight from the data:**
-- Goals average **12.1m** from goal vs 19.0m for non-goals
-- Wider angle = higher xG (more of the goal is visible)
-- Player quality adds secondary signal
 """)
 
 st.divider()

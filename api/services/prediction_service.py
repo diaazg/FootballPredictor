@@ -36,9 +36,8 @@ def predict_match(
                            mw=mw,
                            home_stats_override=home_stats,
                            away_stats_override=away_stats)
-    X_scaled = entry.scaler.transform(X)
-    code = int(entry.model.predict(X_scaled)[0])
-    probs = entry.model.predict_proba(X_scaled)[0]
+    code = int(entry.model.predict(X)[0])
+    probs = entry.model.predict_proba(X)[0]
 
     prob_home = round(float(probs[2]), 4)
     prob_draw = round(float(probs[1]), 4)

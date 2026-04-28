@@ -42,7 +42,7 @@ with st.sidebar:
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("🏆 Match Outcome Predictor")
-st.caption("Cycle 1 · XGBoost (Tuned, Chronological) · 52.85% accuracy on hold-out · Premier League 2000–2018")
+st.caption("Premier League 2000–2018")
 st.divider()
 
 # ── Load team list ────────────────────────────────────────────────────────────
