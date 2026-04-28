@@ -29,11 +29,11 @@ app = FastAPI(
     title="Football Predictor API",
     description=(
         "Three prediction cycles served through a unified interface:\n\n"
-        "| Model key | Cycle | Task | Best metric |\n"
-        "|-----------|-------|------|-------------|\n"
-        "| `match`   | 1 | W/D/L match outcome | 57.33% accuracy |\n"
-        "| `xg`      | 2 | Expected Goals probability | AUC 0.8183 |\n"
-        "| `injury`  | 3 | Player injury risk | AUC 0.6220 |\n\n"
+        "| Model key | Cycle | Task | Algorithm | Best metric |\n"
+        "|-----------|-------|------|-----------|-------------|\n"
+        "| `match`   | 1 | W/D/L match outcome        | XGBoost (tuned, chronological) | 52.85% accuracy |\n"
+        "| `xg`      | 2 | Expected Goals probability | XGBoost (tuned, random)        | AUC 0.8183 |\n"
+        "| `injury`  | 3 | Player injury risk         | LightGBM (tuned, chronological) | AUC 0.68 |\n\n"
         "All predictions go through **POST /predict** using a `model` discriminator field. "
         "SHAP explanations are available via **POST /explain**.\n\n"
         "Interactive docs: `/docs` — ReDoc: `/redoc`"
