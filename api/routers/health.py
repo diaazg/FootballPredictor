@@ -1,3 +1,4 @@
+from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from api.services.model_registry import is_ready as models_ready
 from api.ml.feature_store import is_ready as store_ready

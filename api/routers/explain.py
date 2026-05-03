@@ -1,3 +1,4 @@
+from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from api.schemas.explanation import ExplainRequest, ExplainResponse
 from api.services import explanation_service as svc

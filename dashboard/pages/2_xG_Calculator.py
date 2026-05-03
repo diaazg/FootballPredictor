@@ -1,5 +1,6 @@
+from __future__ import annotations
 """
-Page 2 — Expected Goals (xG) Calculator (Cycle 2)
+Expected Goals (xG) Calculator (Cycle 2)
 """
 
 import sys, os
@@ -11,16 +12,15 @@ from dashboard.components.charts import xg_pitch, shap_bar_chart
 
 st.set_page_config(page_title="xG Calculator", page_icon="🎯", layout="wide")
 
-with st.sidebar:
-    st.title("⚽ Football Predictor")
-    if api.is_api_ready():
-        st.success("API Connected", icon="✅")
-    else:
-        st.error("API Offline", icon="🔴")
+# with st.sidebar:
+#     st.title("⚽ Football Predictor")
+#     if api.is_api_ready():
+#         st.success("API Connected", icon="✅")
+#     else:
+#         st.error("API Offline", icon="🔴")
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("🎯 Expected Goals (xG) Calculator")
-st.caption("Premier League shots")
 st.write(
     "Set the shot location and context below. **Distance and angle to goal are "
     "computed automatically** from the coordinates."

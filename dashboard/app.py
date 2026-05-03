@@ -1,6 +1,6 @@
+from __future__ import annotations
 """
-Football Predictor — Streamlit Dashboard
-Landing page and API status check.
+Football Analytics AI — Interactive Analysis and Prediction Platform
 """
 
 import streamlit as st
@@ -12,17 +12,24 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from dashboard.components.api_client import is_api_ready
 
 st.set_page_config(
-    page_title="Football Predictor",
+    page_title="Football Analytics AI",
     page_icon="⚽",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
+# ── Navigation (hidden so we can manually place links below our sidebar content)
+home_page    = st.Page("pages/0_Home.py",              title="Home",           icon="🏠", default=True)
+match_page   = st.Page("pages/1_Match_Predictor.py",  title="Match Outcome",  icon="🏆")
+xg_page      = st.Page("pages/2_xG_Calculator.py",    title="xG Calculator",  icon="🎯")
+injury_page  = st.Page("pages/3_Injury_Risk.py",       title="Injury Risk",    icon="🏥")
+
+pg = st.navigation([home_page, match_page, xg_page, injury_page], position="hidden")
+
+# ── Sidebar (full manual control of order) ────────────────────────────────────
 with st.sidebar:
-    st.title("⚽ Football Predictor")
+    st.title("⚽ Football Analytics AI")
     st.caption("QMUL Final Year Project · Abdulaziz Alaskar")
-    st.divider()
 
     ready = is_api_ready()
     if ready:
@@ -32,41 +39,11 @@ with st.sidebar:
         st.caption("Start the API:\n```\n.venv/bin/python -m uvicorn api.main:app --port 8000\n```")
 
     st.divider()
-    st.caption("Navigate using the pages below:")
 
-# ── Main content ──────────────────────────────────────────────────────────────
-st.title("⚽ Football Predictor")
-st.subheader("Football analytics in three tools")
-st.write("")
+    # ── Page links (manually placed BELOW title & status) ────────────────────
+    st.sidebar.page_link("pages/0_Home.py",              label="Home",           icon="🏠")
+    st.sidebar.page_link("pages/1_Match_Predictor.py",  label="Match Outcome",  icon="🏆")
+    st.sidebar.page_link("pages/2_xG_Calculator.py",    label="xG Calculator",  icon="🎯")
+    st.sidebar.page_link("pages/3_Injury_Risk.py",       label="Injury Risk",    icon="🏥")
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("### 🏆 Match Outcome")
-    st.markdown(
-        "Predict **Home Win / Draw / Away Win** for a Premier League match. "
-        "Each team's season-to-date stats are pulled automatically from the feature store."
-    )
-
-with col2:
-    st.markdown("### 🎯 Expected Goals (xG)")
-    st.markdown(
-        "Predict the probability that a shot results in a goal. "
-        "Click anywhere on the pitch to place your shot. Distance and angle are computed automatically."
-    )
-
-with col3:
-    st.markdown("### 🏥 Injury Risk")
-    st.markdown(
-        "Predict whether a player is at high risk of missing 28+ days "
-        "this season based on physical attributes and injury history."
-    )
-
-if not ready:
-    st.info("Start the FastAPI server to enable predictions.")
-
-st.divider()
-st.caption(
-    "Football Predictor · QMUL BSc Computer Science & AI · "
-    "Supervisor: Tayyab Ahmad Ansari · Student: 200612007"
-)
+pg.run()

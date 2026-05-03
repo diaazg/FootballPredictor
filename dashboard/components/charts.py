@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Reusable chart components used across dashboard pages.
 All return Plotly figures — displayed with st.plotly_chart().

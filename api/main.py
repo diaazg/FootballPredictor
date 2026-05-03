@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Football Predictor API — app factory.
 
@@ -26,7 +27,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Football Predictor API",
+    title="Football Analaytics AI API",
     description=(
         "Three prediction cycles served through a unified interface:\n\n"
         "| Model key | Cycle | Task | Algorithm | Best metric |\n"

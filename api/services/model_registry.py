@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Model registry: loads all .pkl artefacts once at startup.
 Provides a typed accessor used by all services.

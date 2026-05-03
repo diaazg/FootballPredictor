@@ -1,5 +1,6 @@
+from __future__ import annotations
 """
-Page 1 — Match Outcome Predictor (Cycle 1)
+Match Outcome Predictor (Cycle 1)
 """
 
 import sys, os
@@ -33,12 +34,12 @@ _STAT_LABELS = {
 STAT_KEYS = list(_STAT_LABELS.keys())
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.title("⚽ Football Predictor")
-    if api.is_api_ready():
-        st.success("API Connected", icon="✅")
-    else:
-        st.error("API Offline", icon="🔴")
+# with st.sidebar:
+#     st.title("⚽ Football Predictor")
+#     if api.is_api_ready():
+#         st.success("API Connected", icon="✅")
+#     else:
+#         st.error("API Offline", icon="🔴")
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("🏆 Match Outcome Predictor")

@@ -1,5 +1,6 @@
+from __future__ import annotations
 """
-Page 3 — Player Injury Risk Predictor (Cycle 3)
+Player Injury Risk Predictor (Cycle 3)
 """
 
 import sys, os
@@ -11,12 +12,12 @@ from dashboard.components.charts import injury_gauge, shap_bar_chart
 
 st.set_page_config(page_title="Injury Risk", page_icon="🏥", layout="wide")
 
-with st.sidebar:
-    st.title("⚽ Football Predictor")
-    if api.is_api_ready():
-        st.success("API Connected", icon="✅")
-    else:
-        st.error("API Offline", icon="🔴")
+# with st.sidebar:
+#     st.title("⚽ Football Predictor")
+#     if api.is_api_ready():
+#         st.success("API Connected", icon="✅")
+#     else:
+#         st.error("API Offline", icon="🔴")
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("🏥 Player Injury Risk Predictor")

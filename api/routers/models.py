@@ -1,3 +1,4 @@
+from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from api.schemas.model_info import ModelInfo, ModelCompareResponse, ModelVariant
 from api.services.model_registry import get_entry, list_models, get_comparisons

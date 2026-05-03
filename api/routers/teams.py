@@ -1,3 +1,4 @@
+from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from api.schemas.team import TeamListResponse, TeamDetailResponse, TeamStats
 from api.services.team_service import get_all_teams, get_team
